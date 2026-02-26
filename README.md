@@ -7,6 +7,10 @@ End-to-end analytics prototype built around a Regional Manager workflow.
 - fast, reusable reporting dataset
 - front-end dashboard UX (filters + KPIs + charts)
 
+## Dashboard Preview
+
+![Regional Performance Dashboard](screenshots/dashboard.png)
+
 ## What’s in this repo
 
 ### Data layer (Postgres)
