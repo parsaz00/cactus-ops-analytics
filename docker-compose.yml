@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: cactus_ops_db
+    restart: unless_stopped
+    environment:
+      POSTGRES_USER: cactus
+      POSTGRES_PASSWORD: cactus_pw
+      POSTGRES_DB: cactus_ops
+    ports:
+      - "5432:5432"
+    volumes:
+      - cactus_ops_pgdata:/var/lib/postgresql/data
+
+volumes:
+  cactus_ops_pgdata:
