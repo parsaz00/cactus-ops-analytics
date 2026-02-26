@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchWeeklyPerformance, type WeeklyRow } from "./api.ts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 import "./App.css";
 
 function toNum(x: string) {
@@ -98,6 +107,18 @@ export default function App() {
     const salesPerLH = labourHours === 0 ? 0 : netSales / labourHours;
 
     return { netSales, covers, avgCheck, labourPct, salesPerLH };
+  }, [rows]);
+
+    const topNetSales = useMemo(() => {
+    return [...rows]
+      .map((r) => ({
+      location_id: r.location_id,
+      location_name: r.location_name,
+      short_label: `Loc ${r.location_id}`,
+      net_sales_num: toNum(r.net_sales),
+    }))
+      .sort((a, b) => b.net_sales_num - a.net_sales_num)
+      .slice(0, 10);
   }, [rows]);
 
   return (
@@ -206,6 +227,62 @@ export default function App() {
         <KPI title="Avg Check" value={totals.avgCheck.toFixed(2)} />
         <KPI title="Sales / Labour Hr" value={totals.salesPerLH.toFixed(2)} />
         <KPI title="Locations" value={String(rows.length)} />
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #333",
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 18,
+          background: "#111827",
+        }}
+      >
+      <div style={{ fontWeight: 600, marginBottom: 10 }}>
+          Top 10 Locations — Net Sales
+      </div>
+      
+      <div style={{ width: "100%", height: 320 }}>
+          <ResponsiveContainer>
+            <BarChart
+              data={topNetSales}
+              margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+      >
+              <CartesianGrid stroke="#333" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="short_label"
+                tick={{ fontSize: 12, fill: "#aaa" }}
+                interval={0}
+                angle={0}
+                height={30}
+              />
+              <YAxis
+                tickFormatter={(v) => formatMoney(Number(v))}
+                tick={{ fill: "#aaa", fontSize: 12 }}
+                width={100}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "#1f2937",
+                  border: "1px solid #444",
+                  borderRadius: 8,
+                  color: "white",
+                }}
+                labelStyle={{ color: "#aaa" }}
+                formatter={(v: any) => formatMoney(Number(v))}
+                formatter={(value, name, props) => [
+                  formatMoney(Number(value)),
+                  "Net Sales",
+                  ]}
+              />
+                <Bar
+                dataKey="net_sales_num"
+                fill="#4ade80"       // modern green
+                radius={[6, 6, 0, 0]} // rounded top corners
+                />            
+                </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div style={{ border: "1px solid #e6e6e6", borderRadius: 12, overflow: "hidden" }}>
