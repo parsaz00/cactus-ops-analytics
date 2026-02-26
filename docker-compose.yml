@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16
     container_name: cactus_ops_db
-    restart: unless_stopped
+    restart: unless-stopped
     environment:
       POSTGRES_USER: cactus
       POSTGRES_PASSWORD: cactus_pw
