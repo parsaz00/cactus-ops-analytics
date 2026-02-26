@@ -20,22 +20,46 @@ function formatPct(n: number) {
 }
 
 export default function App() {
+  // Applied filters (drive the API)
   const [year, setYear] = useState(2026);
   const [week, setWeek] = useState(9);
-  const [regionInput, setRegionInput] = useState<string>("");
   const [region, setRegion] = useState<string>("");
+
+  // Draft filters (user edits these without triggering refresh)
+  const [yearInput, setYearInput] = useState<string>(String(year));
+  const [weekInput, setWeekInput] = useState<string>(String(week));
+  const [regionInput, setRegionInput] = useState<string>("");
 
   const [rows, setRows] = useState<WeeklyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>("");
 
-  useEffect(() => {
-  const timeout = setTimeout(() => {
-    setRegion(regionInput);
-  }, 400); // 400ms debounce
+  function applyFilters() {
+    const y = yearInput.trim();
+    const w = weekInput.trim();
+    // If empty, don't change applied filters (no weird 0s)
+    if (y !== "") {
+      const yNum = Number(y);
+      if (Number.isFinite(yNum) && yNum >= 2000 && yNum <= 2100) setYear(yNum);
+    }
 
-  return () => clearTimeout(timeout);
-}, [regionInput]);
+    if (w !== "") {
+      const wNum = Number(w);
+      if (Number.isFinite(wNum) && wNum >= 1 && wNum <= 53) setWeek(wNum);
+    }
+
+    setRegion(regionInput.trim());
+  }
+
+  function resetFilters() {
+    setYear(2026);
+    setWeek(9);
+    setRegion("");
+
+    setYearInput("2026");
+    setWeekInput("9");
+    setRegionInput("");
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -58,8 +82,7 @@ export default function App() {
     };
   }, [year, week, region]);
 
-  const regions = useMemo(() => {
-    // For a first version, derive from current response
+  const regionOptions = useMemo(() => {
     const set = new Set(rows.map((r) => r.region));
     return Array.from(set).sort();
   }, [rows]);
@@ -78,46 +101,100 @@ export default function App() {
   }, [rows]);
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto" }}>
+    <div
+      style={{
+        maxWidth: 1100,
+        margin: "0 auto",
+        padding: 24,
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
+      }}
+    >
       <h1 style={{ marginBottom: 6 }}>Regional Performance Dashboard</h1>
       <div style={{ color: "#555", marginBottom: 18 }}>
         Prototype: Postgres (dims/facts + governed views) → Node API → React.
       </div>
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
+      {/* Filters */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          applyFilters();
+        }}
+        style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10 }}
+      >
         <label>
           Year{" "}
           <input
             type="number"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
+            value={yearInput}
+            onChange={(e) => setYearInput(e.target.value)}
             style={{ width: 90, padding: 6, marginLeft: 6 }}
-          />
+            />
         </label>
 
         <label>
           Week{" "}
           <input
             type="number"
-            value={week}
-            onChange={(e) => setWeek(Number(e.target.value))}
+            value={weekInput}
+            onChange={(e) => setWeekInput(e.target.value)}
             style={{ width: 90, padding: 6, marginLeft: 6 }}
-          />
+            />
         </label>
 
         <label>
           Region{" "}
-          <input
-          placeholder="All"
-          value={regionInput}
-          onChange={(e) => setRegionInput(e.target.value)}
+          <select
+            value={regionInput}
+            onChange={(e) => setRegionInput(e.target.value)}
             style={{ width: 220, padding: 6, marginLeft: 6 }}
-          />
+          >
+            <option value="">All</option>
+            {regionOptions.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
         </label>
 
+        <button
+          type="submit"
+          style={{
+            padding: "6px 12px",
+            borderRadius: 8,
+            border: "1px solid #777",
+            background: "#222",
+            color: "white",
+            cursor: "pointer",
+          }}
+        >
+          Apply
+        </button>
+
+        <button
+          type="button"
+          onClick={resetFilters}
+          style={{
+            padding: "6px 12px",
+            borderRadius: 8,
+            border: "1px solid #777",
+            background: "transparent",
+            color: "white",
+            cursor: "pointer",
+          }}
+        >
+          Reset
+        </button>
+
         <div style={{ color: "#777", fontSize: 12, alignSelf: "center" }}>
-          Tip: try “Alberta” or “Lower Mainland”
+          Tip: try “Alberta” or “Lower Mainland” (Press Enter to apply)
         </div>
+      </form>
+
+      {/* Applied filter indicator */}
+      <div style={{ color: "#888", fontSize: 12, marginBottom: 14 }}>
+        Applied: Year {year}, Week {week}, Region {region || "All"}
       </div>
 
       {loading && <div>Loading…</div>}
