@@ -44,3 +44,73 @@ SELECT
 FROM vw_location_daily_summary d
 LEFT JOIN vw_labor_daily_summary l
   ON l.date_key = d.date_key AND l.location_id = d.location_id;
+
+-- Enriched daily performance (adds region/city/location_name)
+CREATE OR REPLACE VIEW vw_daily_performance_enriched AS
+SELECT
+  p.date_key,
+  p.location_id,
+  loc.location_name,
+  loc.region,
+  loc.city,
+  p.net_sales,
+  p.gross_sales,
+  p.discounts,
+  p.covers,
+  p.avg_check,
+  p.labor_hours,
+  p.labor_cost,
+  p.labor_pct,
+  p.sales_per_labor_hour
+FROM vw_daily_performance p
+JOIN dim_location loc
+  ON loc.location_id = p.location_id;
+
+
+-- Weekly rollup by location (regional-manager friendly)
+CREATE OR REPLACE VIEW vw_location_weekly_performance AS
+SELECT
+  d.year,
+  d.week_of_year,
+  p.location_id,
+  loc.location_name,
+  loc.region,
+  loc.city,
+  SUM(p.net_sales) AS net_sales,
+  SUM(p.covers) AS covers,
+  CASE WHEN SUM(p.covers) = 0 THEN 0
+       ELSE ROUND(SUM(p.net_sales) / SUM(p.covers), 2)
+  END AS avg_check,
+  SUM(p.labor_hours) AS labor_hours,
+  SUM(p.labor_cost) AS labor_cost,
+  CASE WHEN SUM(p.net_sales) = 0 THEN 0
+       ELSE ROUND(SUM(p.labor_cost) / SUM(p.net_sales), 4)
+  END AS labor_pct,
+  CASE WHEN SUM(p.labor_hours) = 0 THEN 0
+       ELSE ROUND(SUM(p.net_sales) / SUM(p.labor_hours), 2)
+  END AS sales_per_labor_hour
+FROM vw_daily_performance p
+JOIN dim_date d
+  ON d.date_key = p.date_key
+JOIN dim_location loc
+  ON loc.location_id = p.location_id
+GROUP BY d.year, d.week_of_year, p.location_id, loc.location_name, loc.region, loc.city;
+
+
+-- Menu category performance by day and location
+CREATE OR REPLACE VIEW vw_menu_category_daily AS
+SELECT
+  s.date_key,
+  s.location_id,
+  loc.location_name,
+  loc.region,
+  i.category,
+  SUM(s.net_sales) AS net_sales,
+  SUM(s.gross_sales) AS gross_sales,
+  SUM(s.covers) AS covers
+FROM fact_sales s
+JOIN dim_item i
+  ON i.item_id = s.item_id
+JOIN dim_location loc
+  ON loc.location_id = s.location_id
+GROUP BY s.date_key, s.location_id, loc.location_name, loc.region, i.category;

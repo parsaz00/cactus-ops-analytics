@@ -1,1 +1,37 @@
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Env / secrets ---
+.env
+.env.*    # keep .env.example if you make one
+
+# --- Node ---
+**/node_modules/
+**/dist/
+**/build/
+**/.cache/
+**/.parcel-cache/
+**/.vite/
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- Generated seed outputs ---
 data/seed/out/
+data/seeds/out/
+data/seed/out/*.csv
+data/seeds/out/*.csv
+
+# --- Postgres / Docker volumes ---
+*.pid

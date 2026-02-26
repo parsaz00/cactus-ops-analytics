@@ -22,11 +22,20 @@ function formatPct(n: number) {
 export default function App() {
   const [year, setYear] = useState(2026);
   const [week, setWeek] = useState(9);
+  const [regionInput, setRegionInput] = useState<string>("");
   const [region, setRegion] = useState<string>("");
 
   const [rows, setRows] = useState<WeeklyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>("");
+
+  useEffect(() => {
+  const timeout = setTimeout(() => {
+    setRegion(regionInput);
+  }, 400); // 400ms debounce
+
+  return () => clearTimeout(timeout);
+}, [regionInput]);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,9 +108,9 @@ export default function App() {
         <label>
           Region{" "}
           <input
-            placeholder="All"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
+          placeholder="All"
+          value={regionInput}
+          onChange={(e) => setRegionInput(e.target.value)}
             style={{ width: 220, padding: 6, marginLeft: 6 }}
           />
         </label>
